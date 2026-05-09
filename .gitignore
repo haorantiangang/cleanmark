@@ -45,9 +45,6 @@ Thumbs.db
 .env
 .env.local
 
-# Screenshots (placeholder)
-screenshots/
-
 # Temporary files
 tmp/
 temp/
