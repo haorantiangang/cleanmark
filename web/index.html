@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanMark - 去水印神器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .textarea-wrapper {
+            position: relative;
+        }
+
+        .platform-badge {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            box-shadow: none;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .result-area {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateX(5px);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .user-info {
+            text-align: center;
+            padding: 25px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .quota-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .quota-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .quota-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .task-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            background: #f8f9fa;
+        }
+
+        .task-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .toast.error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .platform-tag {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .platform-tag:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 CleanMark</h1>
+            <p>一键去除多平台视频水印 · 支持抖音/快手/小红书/B站/微博/西瓜/YouTube/TikTok</p>
+        </div>
+
+        <div class="main-content">
+            <div class="work-area">
+                <div class="card">
+                    <h2 style="margin-bottom: 20px; color: #333;">🔗 解析视频</h2>
+                    
+                    <div class="platforms-grid" id="platformsGrid">
+                        <div class="platform-tag" onclick="setExample('douyin')">📱 抖音</div>
+                        <div class="platform-tag" onclick="setExample('kuaishou')">⚡ 快手</div>
+                        <div class="platform-tag" onclick="setExample('xiaohongshu')">📕 小红书</div>
+                        <div class="platform-tag" onclick="setExample('bilibili')">📺 B站</div>
+                        <div class="platform-tag" onclick="setExample('weibo')">🐦 微博</div>
+                        <div class="platform-tag" onclick="setExample('xigua')">🍉 西瓜视频</div>
+                        <div class="platform-tag" onclick="setExample('youtube')">▶️ YouTube</div>
+                        <div class="platform-tag" onclick="setExample('tiktok')">🎵 TikTok</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>粘贴视频链接</label>
+                        <div class="textarea-wrapper">
+                            <textarea id="videoUrl" rows="3" placeholder="支持抖音、快手、小红书、B站、微博、西瓜视频、YouTube、TikTok等平台的分享链接..."></textarea>
+                            <span class="platform-badge" id="platformBadge" style="display: none;">检测中...</span>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="parseVideo()" id="parseBtn">
+                        ⚡ 开始解析
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="batchParse()">
+                        📦 批量解析（最多20个）
+                    </button>
+
+                    <div class="result-area" id="resultArea">
+                        <!-- 解析结果会显示在这里 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="card user-info">
+                    <div class="avatar" id="userAvatar">?</div>
+                    <div class="user-name" id="userName">未登录</div>
+                    <div style="color: #666; font-size: 14px;" id="userPhone"></div>
+                    
+                    <div class="quota-info">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>今日额度</span>
+                            <span id="quotaText">- / -</span>
+                        </div>
+                        <div class="quota-bar">
+                            <div class="quota-fill" id="quotaBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="showLoginModal()" id="loginBtn" style="margin-top: 15px;">
+                        🔐 登录 / 注册
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; color: #333;">📋 历史记录</h3>
+                    <div class="task-list" id="taskList">
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                <polyline points="13 2 13 9 20 9"/>
+                            </svg>
+                            <p>暂无解析记录</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/v1';
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token) {
+                loadUserInfo();
+                loadTaskList();
+            }
+            
+            // 监听URL输入，自动检测平台
+            document.getElementById('videoUrl').addEventListener('input', detectPlatform);
+        });
+
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 检测平台类型
+        async function detectPlatform() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const badge = document.getElementById('platformBadge');
+
+            if (!url) {
+                badge.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/detect/platform`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 200 && data.data.supported) {
+                    badge.style.display = 'block';
+                    badge.textContent = data.data.platform_name;
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Platform detection failed:', error);
+            }
+        }
+
+        // 设置示例链接
+        function setExample(platform) {
+            const examples = {
+                douyin: 'https://www.douyin.com/video/xxxxxxxx',
+                kuaishou: 'https://v.kuaishou.com/xxxxxx',
+                xiaohongshu: 'https://www.xiaohongshu.com/explore/xxxxx',
+                bilibili: 'https://www.bilibili.com/video/BVxxxxxxxx',
+                weibo: 'https://weibo.com/tv/show/xxxxx',
+                xigua: 'https://www.ixigua.com/xxxxx',
+                youtube: 'https://www.youtube.com/watch?v=xxxxx',
+                tiktok: 'https://www.tiktok.com/@user/video/xxxxx'
+            };
+            
+            document.getElementById('videoUrl').value = examples[platform];
+            detectPlatform();
+        }
+
+        // 解析视频
+        async function parseVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            
+            if (!url) {
+                showToast('请输入视频链接', 'error');
+                return;
+            }
+
+            if (!token) {
+                showToast('请先登录', 'error');
+                showLoginModal();
+                return;
+            }
+
+            const btn = document.getElementById('parseBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span>解析中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    showToast('任务已提交，正在处理...');
+                    document.getElementById('videoUrl').value = '';
+                    document.getElementById('platformBadge').style.display = 'none';
+                    
+                    // 轮询获取结果
+                    pollTaskResult(data.data.task_id);
+                    loadTaskList();
+                } else {
+                    showToast(data.message || '解析失败', 'error');
+                }
+            } catch (error) {
+                console.error('Parse error:', error);
+                showToast('网络错误，请重试', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '⚡ 开始解析';
+            }
+        }
+
+        // 轮询任务结果
+        async function pollTaskResult(taskId, attempts = 0) {
+            if (attempts > 30) { // 最多等待30秒
+                showToast('解析超时，请稍后查看历史记录', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    const task = data.data;
+                    
+                    if (task.status === 'processing' || task.status === 'pending') {
+                        setTimeout(() => pollTaskResult(taskId, attempts + 1), 1000);
+                    } else if (task.status === 'success') {
+                        showResult(task);
+                        showToast('✅ 解析成功！');
+                        loadTaskList();
+                    } else if (task.status === 'failed') {
+                        showToast(`❌ 解析失败: ${task.error_message || '未知错误'}`, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Poll error:', error);
+            }
+        }
+
+        // 显示结果
+        function showResult(task) {
+            console.log('showResult task:', task);
+            console.log('task_id:', task.task_id);
+            console.log('All task keys:', Object.keys(task));
+            
+            const resultArea = document.getElementById('resultArea');
+            resultArea.style.display = 'block';
+
+            const platformNames = {
+                douyin: '抖音',
+                kuaishou: '快手',
+                xiaohongshu: '小红书',
+                bilibili: 'B站',
+                weibo: '微博',
+                xigua: '西瓜视频',
+                youtube: 'YouTube',
+                tiktok: 'TikTok'
+            };
+
+            const html = `
+                <div class="result-item">
+                    <h3>${task.title || '未命名视频'}</h3>
+                    <div class="result-meta">
+                        <span>🏷️ ${platformNames[task.platform] || task.platform}</span>
+                        <span>⏱️ ${formatDuration(task.duration)}</span>
+                        <span>⚡ ${task.process_time}ms</span>
+                    </div>
+                    ${task.cover_url ? `<img src="${task.cover_url}" style="max-width: 300px; border-radius: 8px; margin: 10px 0;">` : ''}
+                    <button onclick="downloadVideo(${task.task_id})" class="download-btn">
+                        💾 下载无水印视频
+                    </button>
+                </div>
+            `;
+            
+            resultArea.insertAdjacentHTML('afterbegin', html);
+        }
+
+        // 下载视频
+        async function downloadVideo(taskId) {
+            if (!taskId) {
+                showToast('任务ID无效', 'error');
+                return;
+            }
+            
+            showToast('正在准备下载...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/download/${taskId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('下载失败');
+                }
+                
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.url) {
+                        showToast('📱 ' + data.message, 'info');
+                        setTimeout(() => {
+                            window.open(data.url, '_blank');
+                        }, 1500);
+                    } else {
+                        throw new Error('无视频链接');
+                    }
+                } else {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video_${taskId}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showToast('✅ 下载成功！');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('❌ 下载失败，请重试', 'error');
+            }
+        }
+
+        // 格式化时长
+        function formatDuration(seconds) {
+            if (!seconds) return '--:--';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}` 
+                         : `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/user/info`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    currentUser = data.data.user;
+                    updateUserInfo(data.data);
+                }
+            } catch (error) {
+                console.error('Load user info error:', error);
+            }
+        }
+
+        // 更新用户界面
+        function updateUserInfo(userData) {
+            const user = userData.user;
+            
+            document.getElementById('userAvatar').textContent = user.nickname ? user.nickname[0].toUpperCase() : '?';
+            document.getElementById('userName').textContent = user.nickname || '用户';
+            document.getElementById('userPhone').textContent = user.phone || '';
+            document.getElementById('loginBtn').textContent = '🚪 退出登录';
+            document.getElementById('loginBtn').onclick = logout;
+
+            const remaining = userData.remaining_quota;
+            const total = userData.daily_quota;
+            const percent = total > 0 ? (remaining / total * 100) : 0;
+            
+            document.getElementById('quotaText').textContent = `${remaining} / ${total}`;
+            document.getElementById('quotaBar').style.width = `${percent}%`;
+        }
+
+        // 加载任务列表
+        async function loadTaskList() {
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks?page=1&page_size=10`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    renderTaskList(data.data.list);
+                }
+            } catch (error) {
+                console.error('Load tasks error:', error);
+            }
+        }
+
+        // 渲染任务列表
+        function renderTaskList(tasks) {
+            const container = document.getElementById('taskList');
+            
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                        </svg>
+                        <p>暂无解析记录</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const statusMap = {
+                success: { class: 'status-success', text: '✅ 成功' },
+                processing: { class: 'status-processing', text: '⏳ 处理中' },
+                pending: { class: 'status-pending', text: '⏸️ 等待中' },
+                failed: { class: 'status-failed', text: '❌ 失败' }
+            };
+
+            container.innerHTML = tasks.map(task => {
+                const status = statusMap[task.status] || statusMap.pending;
+                return `
+                    <div class="task-item" onclick="viewTaskDetail(${task.id})">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 14px; color: #333;">
+                                ${(task.title || '未命名').substring(0, 20)}...
+                            </strong>
+                            <span class="task-status ${status.class}">${status.text}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                            ${new Date(task.created_at).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 查看任务详情
+        async function viewTaskDetail(taskId) {
+            try {
+                const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 200 && data.data.status === 'success') {
+                    showResult(data.data);
+                }
+            } catch (error) {
+                console.error('View task detail error:', error);
+            }
+        }
+
+        // 批量解析
+        function batchParse() {
+            const urls = prompt('请输入多个链接（每行一个）：');
+            if (!urls) return;
+
+            const urlList = urls.split('\n').filter(url => url.trim());
+            
+            if (urlList.length === 0) {
+                showToast('请输入至少一个链接', 'error');
+                return;
+            }
+
+            if (urlList.length > 20) {
+                showToast('最多支持20个链接', 'error');
+                return;
+            }
+
+            // TODO: 实现批量解析逻辑
+            showToast(`已提交${urlList.length}个解析任务`);
+        }
+
+        // 显示登录弹窗
+        function showLoginModal() {
+            const code = prompt('请输入测试码（任意字符串即可）:');
+            if (!code) return;
+
+            login(code);
+        }
+
+        // 登录
+        async function login(code) {
+            try {
+                const response = await fetch(`${API_BASE}/auth/wechat/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: code,
+                        nickname: `用户${Math.random().toString(36).substr(2, 6)}`
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    token = data.data.token;
+                    localStorage.setItem('token', token);
+                    currentUser = data.data.user;
+                    
+                    showToast('🎉 登录成功！');
+                    updateUserInfo({
+                        user: data.data.user,
+                        remaining_quota: 3,
+                        daily_quota: 3
+                    });
+                    loadTaskList();
+                } else {
+                    showToast(data.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            token = null;
+            currentUser = null;
+            localStorage.removeItem('token');
+            
+            document.getElementById('userAvatar').textContent = '?';
+            document.getElementById('userName').textContent = '未登录';
+            document.getElementById('userPhone').textContent = '';
+            document.getElementById('loginBtn').textContent = '🔐 登录 / 注册';
+            document.getElementById('loginBtn').onclick = showLoginModal;
+            document.getElementById('quotaText').textContent = '- / -';
+            document.getElementById('quotaBar').style.width = '0%';
+            
+            renderTaskList([]);
+            showToast('已退出登录');
+        }
+    </script>
+</body>
+</html>

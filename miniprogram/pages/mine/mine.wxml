@@ -1,0 +1,77 @@
+<view class="container">
+  
+  <view class="card" style="text-align: center;">
+    
+    <view class="user-avatar">
+      {{isLoggedIn ? (userInfo.nickname ? userInfo.nickname[0] : '?') : '?'}}
+    </view>
+    
+    <view style="font-size: 36rpx; font-weight: bold; color: #333; margin-bottom: 8rpx;">
+      {{isLoggedIn ? (userInfo.nickname || '用户') : '未登录'}}
+    </view>
+    
+    <view style="font-size: 26rpx; color: #999; margin-bottom: 24rpx;" wx:if="{{isLoggedIn && userInfo.phone}}">
+      {{userInfo.phone}}
+    </view>
+
+    <view class="quota-bar-bg" wx:if="{{isLoggedIn}}">
+      <view class="quota-bar-fill" style="width: {{quotaPercent}}%"></view>
+    </view>
+    
+    <view style="display: flex; justify-content: space-between; font-size: 26rpx; color: #666; margin-top: 12rpx;" wx:if="{{isLoggedIn}}">
+      <text>今日额度</text>
+      <text>{{remainingQuota}} / {{dailyQuota}}</text>
+    </view>
+
+    <button 
+      size="mini"
+      bindtap="handleLogin"
+      style="margin-top: 30rpx; background: {{isLoggedIn ? '#f0f0f0' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}; color: {{isLoggedIn ? '#666' : 'white'}};"
+    >
+      {{isLoggedIn ? '🚪 退出登录' : '🔐 登录 / 注册'}}
+    </button>
+
+  </view>
+
+  <view class="card">
+    <view class="title">📋 最近任务</view>
+    
+    <view wx:if="{{tasks.length > 0}}">
+      <view 
+        wx:for="{{tasks}}" 
+        wx:key="id"
+        class="task-item"
+        bindtap="viewTaskDetail"
+        data-id="{{item.id}}"
+      >
+        <view style="display: flex; justify-content: space-between; align-items: center;">
+          <text style="font-size: 28rpx; color: #333; max-width: 400rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            {{item.title || '未命名视频'}}
+          </text>
+          <view class="status-tag {{item.status === 'success' ? 'status-success' : (item.status === 'failed' ? 'status-failed' : status-processing')}}">
+            {{item.status === 'success' ? '✅' : (item.status === 'failed' ? '❌' : '⏳')}}
+          </view>
+        </view>
+        <view style="font-size: 24rpx; color: #999; margin-top: 8rpx;">
+          {{item.created_at}}
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{tasks.length === 0 && isLoggedIn}}">
+      <text>暂无解析记录</text>
+    </view>
+
+    <view class="empty-state" wx:if="{{!isLoggedIn}}">
+      <text>登录后查看历史记录</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <button bindtap="refreshData" size="mini" style="margin-bottom: 16rpx;">🔄 刷新数据</button>
+    <button open-type="share" size="mini" style="margin-bottom: 16rpx;">🔗 分享给好友</button>
+    <button bindtap="contactService" size="mini" style="margin-bottom: 16rpx;">💬 联系客服</button>
+    <button bindtap="aboutApp" size="mini">ℹ️ 关于我们</button>
+  </view>
+
+</view>

@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanMark 管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            /* 强制显示滚动条，防止滚动条出现/消失导致页面闪动 */
+            overflow-y: scroll;
+            overflow-x: hidden;
+            /* 锁定视口，防止布局抖动 */
+            position: relative;
+        }
+
+        html {
+            /* 强制html也显示滚动条 */
+            overflow-y: scroll;
+            overflow-x: hidden;
+            /* 提高性能，减少重绘 */
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        /* 全局移除所有元素的focus outline（防止点击时的闪烁） */
+        *:focus {
+            outline: none !important;
+        }
+
+        /* 特殊处理：只对可交互元素移除outline */
+        button:focus,
+        a:focus,
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 为需要无障碍访问的场景保留键盘导航指示（可选） */
+        .nav-menu button:focus-visible {
+            background: rgba(255,255,255,0.15) !important;
+            outline: 2px solid rgba(255,255,255,0.3) !important;
+            outline-offset: -2px;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .login-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+
+        /* Admin Layout */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            /* 锁定布局，防止内容变化导致抖动 */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #001529;
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .sidebar-header span {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 12px 0;
+        }
+
+        .nav-menu li {
+            margin: 4px 12px;
+        }
+
+        .nav-menu button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: left;
+            /* 只对背景色和颜色做过渡，避免其他属性变化导致抖动 */
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+            font-family: inherit;
+            /* 移除浏览器默认的outline轮廓 */
+            outline: none;
+            -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+            /* 防止按钮点击时的位移 */
+            user-select: none;
+            -webkit-user-select: none;
+            /* 固定按钮高度防止跳动 */
+            line-height: 1.4;
+            min-height: 44px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-menu button:hover {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.85);
+            /* hover时不移动 */
+            transform: none !important;
+        }
+
+        .nav-menu button.active,
+        .nav-menu button:active,
+        .nav-menu button:focus {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            /* active/focus状态也不移动 */
+            transform: none !important;
+            /* 确保无outline */
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .nav-menu button i {
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        .page-content {
+            display: none;
+        }
+
+        .page-content:first-of-type {
+            display: block;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-card-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .icon-blue { background: #e6f7ff; }
+        .icon-green { background: #f6ffed; }
+        .icon-orange { background: #fff7e6; }
+        .icon-purple { background: #f9f0ff; }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .text-up { color: #52c41a; }
+        .text-down { color: #ff4d4f; }
+
+        /* Tables */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #666;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success { background: #f6ffed; color: #52c41a; }
+        .status-pending { background: #fff7e6; color: #fa8c16; }
+        .status-failed { background: #fff2f0; color: #ff4d4f; }
+        .status-paid { background: #e6f7ff; color: #1890ff; }
+
+        .action-btns button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-view { background: #e6f7ff; color: #1890ff; }
+        .btn-edit { background: #fff7e6; color: #fa8c16; }
+        .btn-delete { background: #fff2f0; color: #ff4d4f; }
+
+        .action-btns button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Charts placeholder */
+        .chart-container {
+            height: 300px;
+            background: #fafafa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Search & Filter */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+        }
+
+        .filter-select {
+            padding: 10px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { border-left: 4px solid #52c41a; }
+        .toast.error { border-left: 4px solid #ff4d4f; }
+        .toast.warning { border-left: 4px solid #faad14; }
+
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filter-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div class="login-container" id="loginPage">
+    <div class="login-box">
+        <h1>🔐 CleanMark 管理后台</h1>
+        <p>请输入管理员账号登录系统</p>
+        
+        <div class="form-group">
+            <label>管理员账号</label>
+            <input type="text" id="adminUsername" placeholder="请输入用户名" value="admin">
+        </div>
+        
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="adminPassword" placeholder="请输入密码" value="admin123">
+        </div>
+        
+        <button type="button" class="btn-login" onclick="adminLogin(event)">登录管理系统</button>
+        
+        <p style="margin-top: 20px; font-size: 12px; color: #999;">
+            默认账号：admin / admin123
+        </p>
+    </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div class="admin-layout" id="adminDashboard" style="display: none;">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>CleanMark</h2>
+            <span>管理后台 v2.0</span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li><button type="button" class="active" onclick="showPage(event, 'dashboard')"><i>📊</i>数据概览</button></li>
+            <li><button type="button" onclick="showPage(event, 'users')"><i>👥</i>用户管理</button></li>
+            <li><button type="button" onclick="showPage(event, 'tasks')"><i>📋</i>任务监控</button></li>
+            <li><button type="button" onclick="showPage(event, 'orders')"><i>💰</i>订单管理</button></li>
+            <li><button type="button" onclick="showPage(event, 'analytics')"><i>📈</i>数据分析</button></li>
+            <li><button type="button" onclick="showPage(event, 'settings')"><i>⚙️</i>系统设置</button></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1 id="pageTitle">数据概览</h1>
+            <div class="header-right">
+                <span id="currentTime"></span>
+                <div class="admin-avatar" onclick="logout(event)" title="退出登录">A</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="page-dashboard" class="page-content">
+            
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">总用户数</span>
+                        <div class="stat-card-icon icon-blue">👥</div>
+                    </div>
+                    <div class="stat-value" id="totalUsers">--</div>
+                    <div class="stat-change text-up">↑ 较昨日 +12%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">今日任务数</span>
+                        <div class="stat-card-icon icon-green">📋</div>
+                    </div>
+                    <div class="stat-value" id="todayTasks">--</div>
+                    <div class="stat-change text-up">↑ 较昨日 +8%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">成功率</span>
+                        <div class="stat-card-icon icon-orange">✅</div>
+                    </div>
+                    <div class="stat-value" id="successRate">--%</div>
+                    <div class="stat-change text-up">↑ 较昨日 +2%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">总收入</span>
+                        <div class="stat-card-icon icon-purple">💰</div>
+                    </div>
+                    <div class="stat-value" id="totalRevenue">¥--</div>
+                    <div class="stat-change text-up">↑ 较昨日 +25%</div>
+                </div>
+            </div>
+
+            <!-- Recent Tasks & Platform Stats -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>最近任务</h3>
+                        <button onclick="showPage(event, 'tasks')" style="padding: 6px 12px; border: 1px solid #d9d9d9; background: white; border-radius: 6px; cursor: pointer;">查看全部</button>
+                    </div>
+                    <div class="card-body">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>任务ID</th>
+                                    <th>平台</th>
+                                    <th>状态</th>
+                                    <th>耗时</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTasksTable">
+                                <tr><td colspan="5" style="text-align:center;color:#999;">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>平台使用分布</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="platformChart" class="chart-container">
+                            📊 平台分布图表
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Page -->
+        <div id="page-users" class="page-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>用户列表</h3>
+                    <span id="userCount" style="color:#666;font-size:14px;"></span>
+                </div>
+                <div class="card-body">
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="搜索用户名/手机号..." oninput="searchUsers(this.value)">
+                        <select class="filter-select" onchange="filterUsersByVip(this.value)">
+                            <option value="">全部等级</option>
+                            <option value="0">免费用户</option>
+                            <option value="1">月卡会员</option>
+                            <option value="2">年卡会员</option>
+                            <option value="3">终身会员</option>
+                        </select>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>昵称</th>
+                                <th>手机号</th>
+                                <th>VIP等级</th>
+                                <th>额度</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="7" style="text-align:center;color:#999;">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="pagination" id="usersPagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Page -->
+        <div id="page-tasks" class="page-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>任务监控</h3>
+                    <span id="taskCount" style="color:#666;font-size:14px;"></span>
+                </div>
+                <div class="card-body">
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="搜索任务ID/链接...">
+                        <select class="filter-select" onchange="filterTasksByStatus(this.value)">
+                            <option value="">全部状态</option>
+                            <option value="pending">等待中</option>
+                            <option value="processing">处理中</option>
+                            <option value="success">成功</option>
+                            <option value="failed">失败</option>
+                        </select>
+                        <select class="filter-select" onchange="filterTasksByPlatform(this.value)">
+                            <option value="">全部平台</option>
+                            <option value="douyin">抖音</option>
+                            <option value="kuaishou">快手</option>
+                            <option value="xiaohongshu">小红书</option>
+                            <option value="bilibili">B站</option>
+                            <option value="weibo">微博</option>
+                            <option value="xigua">西瓜视频</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="tiktok">TikTok</option>
+                        </select>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>任务ID</th>
+                                <th>用户ID</th>
+                                <th>平台</th>
+                                <th>标题</th>
+                                <th>状态</th>
+                                <th>耗时(ms)</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksTableBody">
+                            <tr><td colspan="8" style="text-align:center;color:#999;">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="pagination" id="tasksPagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Page -->
+        <div id="page-orders" class="page-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>订单管理</h3>
+                    <span id="orderCount" style="color:#666;font-size:14px;"></span>
+                </div>
+                <div class="card-body">
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="搜索订单号...">
+                        <select class="filter-select" onchange="filterOrdersByStatus(this.value)">
+                            <option value="">全部状态</option>
+                            <option value="pending">待支付</option>
+                            <option value="paid">已支付</option>
+                            <option value="refunded">已退款</option>
+                        </select>
+                        <select class="filter-select" onchange="filterOrdersByProduct(this.value)">
+                            <option value="">全部产品</option>
+                            <option value="monthly">月卡</option>
+                            <option value="yearly">年卡</option>
+                            <option value="lifetime">终身会员</option>
+                            <option value="single">单次包</option>
+                        </select>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>订单号</th>
+                                <th>用户ID</th>
+                                <th>产品类型</th>
+                                <th>金额</th>
+                                <th>支付方式</th>
+                                <th>状态</th>
+                                <th>下单时间</th>
+                                <th>支付时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="9" style="text-align:center;color:#999;">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="pagination" id="ordersPagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div id="page-analytics" class="page-content" style="display: none;">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>近7天任务趋势</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 280px;">
+                            📈 任务量趋势图
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>平台使用占比</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 280px;">
+                            🍩 平台占比饼图
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 24px;">
+                <div class="card-header">
+                    <h3>热门时段分析</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        ⏰ 用户活跃时段热力图
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="page-settings" class="page-content" style="display: none;">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>基本设置</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>站点名称</label>
+                            <input type="text" value="CleanMark 去水印平台">
+                        </div>
+                        <div class="form-group">
+                            <label>每日免费额度</label>
+                            <input type="number" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label>VIP每分钟请求限制</label>
+                            <input type="number" value="60">
+                        </div>
+                        <div class="form-group">
+                            <label>免费用户每分钟限制</label>
+                            <input type="number" value="10">
+                        </div>
+                        <button type="button" class="btn-login" style="margin-top: 16px;" onclick="saveSettings(event)">保存设置</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>系统信息</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <strong>版本号：</strong> v2.0.0
+                        </div>
+                        <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <strong>Go版本：</strong> 1.21
+                        </div>
+                        <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <strong>数据库：</strong> SQLite
+                        </div>
+                        <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <strong>支持平台：</strong> 8个
+                        </div>
+                        <div style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <strong>运行时间：</strong> <span id="uptime">--</span>
+                        </div>
+                        <div style="padding: 12px 0;">
+                            <strong>内存占用：</strong> <span id="memoryUsage">--</span>
+                        </div>
+                        
+                        <button type="button" class="btn-login btn-secondary" style="margin-top: 20px; background: #f0f0f0; color: #333;" onclick="clearCache(event)">清除缓存</button>
+                            🗑️ 清除缓存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="spinner"></div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8080/api/v1';
+let adminToken = localStorage.getItem('admin_token');
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    if (adminToken) {
+        showDashboard();
+    }
+
+    // ==================== 防闪跳系统 ====================
+
+    // 1. 锁定滚动条（防止滚动条出现/消失导致页面偏移）
+    document.documentElement.style.overflowY = 'scroll';
+    document.body.style.overflowY = 'scroll';
+
+    // 2. 导航按钮：点击后移除焦点
+    document.querySelectorAll('.nav-menu button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimeout(() => this.blur(), 0);
+        });
+    });
+
+    // 3. 只阻止空链接的默认行为（最轻量的拦截）
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+            var href = e.target.getAttribute('href');
+            if (href === '#' || href === '') {
+                e.preventDefault();
+            }
+        }
+    });
+
+    console.log('✅ 防闪跳系统已启动');
+});
+
+function updateTime() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent = now.toLocaleString('zh-CN');
+}
+
+// Admin Login
+function adminLogin(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const username = document.getElementById('adminUsername').value;
+    const password = document.getElementById('adminPassword').value;
+
+    if (!username || !password) {
+        showToast('请输入账号和密码', 'error');
+        return;
+    }
+
+    // Simple admin authentication (in production, use proper API)
+    if (username === 'admin' && password === 'admin123') {
+        adminToken = 'admin-token-' + Date.now();
+        localStorage.setItem('admin_token', adminToken);
+        showToast('✅ 登录成功，欢迎回来！', 'success');
+        showDashboard();
+    } else {
+        showToast('❌ 账号或密码错误', 'error');
+    }
+}
+
+// Show Dashboard
+function showDashboard() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'flex';
+
+    loadDashboardData();
+}
+
+// Logout
+function logout(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    if (confirm('确定要退出登录吗？')) {
+        adminToken = null;
+        localStorage.removeItem('admin_token');
+        document.getElementById('loginPage').style.display = 'flex';
+        document.getElementById('adminDashboard').style.display = 'none';
+        showToast('已退出登录', 'success');
+    }
+}
+
+// Show Page
+function showPage(event, page) {
+    if (event) event.preventDefault();
+
+    // 切换导航高亮
+    document.querySelectorAll('.nav-menu button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.blur();
+    });
+    if (event && event.target) {
+        var btn = event.target.closest('button') || event.target;
+        if (btn) btn.classList.add('active');
+    }
+
+    // 隐藏所有页面，显示目标页面
+    document.querySelectorAll('.page-content').forEach(p => {
+        p.style.display = 'none';
+    });
+    var pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.style.display = 'block';
+
+    // 更新标题
+    var titles = {
+        dashboard: '数据概览', users: '用户管理', tasks: '任务监控',
+        orders: '订单管理', analytics: '数据分析', settings: '系统设置'
+    };
+    var titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = titles[page] || '';
+
+    // 加载数据
+    switch(page) {
+        case 'dashboard': loadDashboardData(); break;
+        case 'users': loadUsersWithFilters(1); break;
+        case 'tasks': loadTasksWithFilters(1); break;
+        case 'orders': loadOrdersWithFilters(1); break;
+        case 'analytics': loadAnalyticsData(); break;
+        case 'settings': loadSystemInfo(); break;
+    }
+}
+
+// Load Dashboard Data
+async function loadDashboardData() {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/dashboard`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            const d = data.data;
+            document.getElementById('totalUsers').textContent = d.total_users || 0;
+            document.getElementById('todayTasks').textContent = d.today_tasks || 0;
+            document.getElementById('successRate').textContent = (d.success_rate || 0).toFixed(1) + '%';
+            document.getElementById('totalRevenue').textContent = '¥' + ((d.total_revenue || 0).toFixed(2));
+
+            // Update platform chart
+            if (d.platforms && d.platforms.length > 0) {
+                renderPlatformChart(d.platforms);
+            }
+
+            // Update recent tasks table
+            if (d.recent_tasks && d.recent_tasks.length > 0) {
+                const tbody = document.getElementById('recentTasksTable');
+                tbody.innerHTML = d.recent_tasks.map(task => `
+                    <tr>
+                        <td>#${task.id}</td>
+                        <td>${getPlatformName(task.platform_type)}</td>
+                        <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
+                        <td>${task.process_time || '--'}ms</td>
+                        <td>${formatTime(task.created_at)}</td>
+                    </tr>
+                `).join('');
+            } else {
+                document.getElementById('recentTasksTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        showToast('加载数据失败', 'error');
+    }
+}
+
+// Load Users
+let usersCurrentPage = 1;
+async function loadUsers(page = 1) {
+    showLoading();
+    usersCurrentPage = page;
+    
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/users?page=${page}&page_size=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            renderUsersTable(data.data.list);
+            document.getElementById('userCount').textContent = `共 ${data.data.total} 个用户`;
+            renderPagination('usersPagination', data.data.total, page, loadUsers);
+        }
+    } catch (err) {
+        showToast('加载用户失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('usersTableBody');
+    
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">暂无用户数据</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.nickname || '-'}</td>
+            <td>${user.phone || '-'}</td>
+            <td><span class="status-badge status-${getVipStatusClass(user.vip_level)}">${getVipLevelText(user.vip_level)}</span></td>
+            <td>${user.used_quota}/${user.daily_quota}</td>
+            <td>${formatTime(user.created_at)}</td>
+            <td class="action-btns">
+                <button type="button" class="btn-view" onclick="viewUser(event, ${user.id})">查看</button>
+                <button type="button" class="btn-edit" onclick="editUser(event, ${user.id})">编辑</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Load Tasks
+let tasksCurrentPage = 1;
+async function loadTasks(page = 1) {
+    showLoading();
+    tasksCurrentPage = page;
+    
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/tasks?page=${page}&page_size=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            renderTasksTable(data.data.list);
+            document.getElementById('taskCount').textContent = `共 ${data.data.total} 个任务`;
+            renderPagination('tasksPagination', data.data.total, page, loadTasks);
+        }
+    } catch (err) {
+        showToast('加载任务失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderTasksTable(tasks) {
+    const tbody = document.getElementById('tasksTableBody');
+    
+    if (!tasks || tasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无任务数据</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = tasks.map(task => `
+        <tr>
+            <td>#${task.id}</td>
+            <td>${task.user_id}</td>
+            <td>${getPlatformName(task.platform_type)}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${task.title || ''}">${task.title || '-'}</td>
+            <td><span class="status-badge status-${task.status}">${getStatusText(task.status)}</span></td>
+            <td>${task.process_time || '--'}</td>
+            <td>${formatTime(task.created_at)}</td>
+            <td class="action-btns">
+                <button type="button" class="btn-view" onclick="viewTask(event, ${task.id})">查看</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Load Orders
+let ordersCurrentPage = 1;
+async function loadOrders(page = 1) {
+    showLoading();
+    ordersCurrentPage = page;
+    
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/orders?page=${page}&page_size=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            renderOrdersTable(data.data.list);
+            document.getElementById('orderCount').textContent = `共 ${data.data.total} 个订单`;
+            renderPagination('ordersPagination', data.data.total, page, loadOrders);
+        }
+    } catch (err) {
+        showToast('加载订单失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderOrdersTable(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;">暂无订单数据</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = orders.map(order => `
+        <tr>
+            <td>${order.order_no}</td>
+            <td>${order.user_id}</td>
+            <td>${getProductName(order.product_type)}</td>
+            <td>¥${order.amount.toFixed(2)}</td>
+            <td>${order.pay_method === 'wechat' ? '微信' : '支付宝'}</td>
+            <td><span class="status-badge status-${order.status}">${getOrderStatusText(order.status)}</span></td>
+            <td>${formatTime(order.created_at)}</td>
+            <td>${order.pay_time ? formatTime(order.pay_time) : '-'}</td>
+        </tr>
+    `).join('');
+}
+
+// Helper Functions
+function getAuthToken() {
+    return adminToken || localStorage.getItem('admin_token') || '';
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return '-';
+    return new Date(timeStr).toLocaleString('zh-CN');
+}
+
+function getPlatformName(platform) {
+    const names = {
+        douyin: '抖音', kuaishou: '快手', xiaohongshu: '小红书',
+        bilibili: 'B站', weibo: '微博', xigua: '西瓜视频',
+        youtube: 'YouTube', tiktok: 'TikTok'
+    };
+    return names[platform] || platform;
+}
+
+function getStatusText(status) {
+    const texts = { pending: '等待中', processing: '处理中', success: '成功', failed: '失败' };
+    return texts[status] || status;
+}
+
+function getVipLevelText(level) {
+    const texts = { 0: '免费用户', 1: '月卡会员', 2: '年卡会员', 3: '终身会员' };
+    return texts[level] || '未知';
+}
+
+function getVipStatusClass(level) {
+    return level > 0 ? 'paid' : 'pending';
+}
+
+function getProductName(type) {
+    const names = { monthly: '月卡', yearly: '年卡', lifetime: '终身会员', single: '单次包' };
+    return names[type] || type;
+}
+
+function getOrderStatusText(status) {
+    const texts = { pending: '待支付', paid: '已支付', refunded: '已退款' };
+    return texts[status] || status;
+}
+
+function renderPagination(containerId, total, currentPage, loadDataFn) {
+    const container = document.getElementById(containerId);
+    const pageSize = 20;
+    const totalPages = Math.ceil(total / pageSize);
+
+    let html = '';
+
+    html += `<button type="button" ${currentPage <= 1 ? 'disabled' : ''} onclick="handlePageClick(event, ${loadDataFn.name}, ${currentPage - 1})">上一页</button>`;
+
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        html += `<button type="button" class="${i === currentPage ? 'active' : ''}" onclick="handlePageClick(event, ${loadDataFn.name}, ${i})">${i}</button>`;
+    }
+
+    html += `<button type="button" ${currentPage >= totalPages ? 'disabled' : ''} onclick="handlePageClick(event, ${loadDataFn.name}, ${currentPage + 1})">下一页</button>`;
+
+    container.innerHTML = html;
+
+    // 为所有分页按钮添加事件委托
+    container.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+}
+
+// 分页点击处理函数
+function handlePageClick(event, pageFn, pageNum) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    if (typeof pageFn === 'function') {
+        pageFn(pageNum);
+    } else if (typeof window[pageFn] === 'function') {
+        window[pageFn](pageNum);
+    }
+}
+
+// Action Handlers
+function viewUser(event, id) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    showToast(`查看用户 #${id}`, 'success');
+}
+
+function editUser(event, id) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    showToast(`编辑用户 #${id}`, 'warning');
+}
+
+function viewTask(event, id) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    showToast(`查看任务 #${id}`, 'success');
+}
+
+function searchUsers(keyword) {
+    // Implement search logic
+    console.log('Searching users:', keyword);
+}
+
+function filterUsersByVip(level) {
+    console.log('Filter by VIP:', level);
+    loadUsers(1);
+}
+
+function filterTasksByStatus(status) {
+    console.log('Filter by status:', status);
+    loadTasks(1);
+}
+
+function filterTasksByPlatform(platform) {
+    console.log('Filter by platform:', platform);
+    loadTasks(1);
+}
+
+function filterOrdersByStatus(status) {
+    console.log('Filter orders by status:', status);
+    loadOrders(1);
+}
+
+function filterOrdersByProduct(product) {
+    console.log('Filter orders by product:', product);
+    loadOrders(1);
+}
+
+function saveSettings(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    showToast('⚙️ 设置保存成功！', 'success');
+}
+
+function clearCache(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    if (confirm('确定要清除所有缓存吗？')) {
+        showToast('🗑️ 缓存已清除', 'success');
+    }
+}
+
+function loadSystemInfo() {
+    const token = getAuthToken();
+    fetch(`${API_BASE}/admin/system/info`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 200) {
+            document.getElementById('uptime').textContent = formatUptime(data.data.uptime);
+        }
+    })
+    .catch(err => console.error('Failed to load system info:', err));
+
+    // Simulate memory usage
+    document.getElementById('memoryUsage').textContent = (Math.random() * 50 + 20).toFixed(1) + ' MB';
+}
+
+// Render Platform Chart
+function renderPlatformChart(platforms) {
+    const container = document.getElementById('platformChart');
+    if (!platforms || platforms.length === 0) {
+        container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">暂无平台数据</div>';
+        return;
+    }
+
+    const total = platforms.reduce((sum, p) => sum + p.count, 0);
+    let html = '<div style="padding: 20px;">';
+    html += '<table style="width:100%;">';
+
+    platforms.forEach((p, index) => {
+        const percentage = ((p.count / total) * 100).toFixed(1);
+        const barWidth = Math.max(percentage * 2, 10);
+
+        html += `
+            <tr style="margin-bottom: 12px;">
+                <td style="padding: 8px 0; width: 80px; font-size: 13px; color:#666;">
+                    ${getPlatformName(p.platform)}
+                </td>
+                <td style="padding: 8px 12px;">
+                    <div style="
+                        background: linear-gradient(90deg, #667eea ${barWidth}%, #f0f0f0 ${barWidth}%);
+                        height: 20px;
+                        border-radius: 10px;
+                        position: relative;
+                        min-width: 100px;
+                    ">
+                        <span style="
+                            position: absolute;
+                            right: -40px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            font-size: 12px;
+                            color: #666;
+                        ">${percentage}%</span>
+                    </div>
+                </td>
+                <td style="padding: 8px 0; width: 60px; text-align:right; font-size: 13px; color:#333; font-weight:600;">
+                    ${p.count}
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</table></div>';
+    container.innerHTML = html;
+}
+
+// Format uptime duration
+function formatUptime(seconds) {
+    if (!seconds) return '--';
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (days > 0) {
+        return `${days}天 ${hours}小时 ${minutes}分钟`;
+    } else if (hours > 0) {
+        return `${hours}小时 ${minutes}分钟`;
+    } else {
+        return `${minutes}分钟`;
+    }
+}
+
+// User Detail Modal
+async function viewUser(id) {
+    showLoading();
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/users/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            const user = data.data.user;
+            const stats = data.data;
+
+            showModal(`
+                <h3 style="margin-bottom:20px;color:#333;font-size:18px;">用户详情</h3>
+                <div style="line-height:2;">
+                    <p><strong>用户ID：</strong>${user.id}</p>
+                    <p><strong>昵称：</strong>${user.nickname || '-'}</p>
+                    <p><strong>手机号：</strong>${user.phone || '-'}</p>
+                    <p><strong>VIP等级：</strong><span class="status-badge status-${getVipStatusClass(user.vip_level)}">${getVipLevelText(user.vip_level)}</span></p>
+                    <p><strong>每日额度：</strong>${user.daily_quota}</p>
+                    <p><strong>已使用额度：</strong>${user.used_quota}</p>
+                    <p><strong>VIP到期时间：</strong>${user.vip_expire_time ? formatTime(user.vip_expire_time) : '未开通'}</p>
+                    <hr style="margin:16px 0;border:none;border-top:1px solid #f0f0f0;">
+                    <p><strong>总任务数：</strong>${stats.task_count}</p>
+                    <p><strong>成功任务数：</strong>${stats.success_task_count}</p>
+                    <p><strong>总订单数：</strong>${stats.order_count}</p>
+                    <p><strong>总消费金额：</strong>¥${(stats.total_spent || 0).toFixed(2)}</p>
+                    <p><strong>注册时间：</strong>${formatTime(user.created_at)}</p>
+                </div>
+            `, '用户详情');
+        }
+    } catch (err) {
+        showToast('获取用户详情失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Edit User VIP Modal
+function editUser(event, id) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    showModal(`
+        <h3 style="margin-bottom:20px;color:#333;font-size:18px;">编辑用户VIP</h3>
+        <form onsubmit="submitEditUserVIP(event, ${id})">
+            <div class="form-group">
+                <label>VIP等级</label>
+                <select id="editVipLevel" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;">
+                    <option value="0">免费用户</option>
+                    <option value="1">月卡会员</option>
+                    <option value="2">年卡会员</option>
+                    <option value="3">终身会员</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>每日额度</label>
+                <input type="number" id="editDailyQuota" value="50" min="1" max="999"
+                       style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;">
+            </div>
+            <button type="submit" class="btn-login">保存修改</button>
+        </form>
+    `, '编辑VIP');
+}
+
+// Submit Edit User VIP
+async function submitEditUserVIP(event, userId) {
+    event.preventDefault();
+
+    const vipLevel = parseInt(document.getElementById('editVipLevel').value);
+    const dailyQuota = parseInt(document.getElementById('editDailyQuota').value);
+
+    showLoading();
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/users/${userId}/vip`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                vip_level: vipLevel,
+                daily_quota: dailyQuota
+            })
+        });
+
+        const data = await response.json();
+        if (data.code === 200) {
+            showToast('✅ VIP信息更新成功', 'success');
+            closeModal();
+            loadUsers(usersCurrentPage);
+        } else {
+            showToast(data.message || '更新失败', 'error');
+        }
+    } catch (err) {
+        showToast('网络错误', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// View Task Detail
+function viewTask(event, id) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    showToast(`查看任务详情 #${id}`, 'info');
+}
+
+// Modal Functions
+let modalElement = null;
+
+function showModal(content, title = '') {
+    // Remove existing modal
+    closeModal();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'customModal';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+    `;
+
+    modal.innerHTML = `
+        <button type="button" onclick="closeModal(event)" style="
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        ">×</button>
+        ${content}
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    modalElement = overlay;
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+}
+
+function closeModal(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    if (modalElement) {
+        modalElement.remove();
+        modalElement = null;
+    }
+}
+
+// Enhanced Filter Functions with API calls
+let currentFilters = {
+    users: { keyword: '', vip_level: '' },
+    tasks: { status: '', platform_type: '', keyword: '' },
+    orders: { status: '', product_type: '' }
+};
+
+function searchUsers(keyword) {
+    currentFilters.users.keyword = keyword;
+    loadUsersWithFilters(1);
+}
+
+function filterUsersByVip(level) {
+    currentFilters.users.vip_level = level;
+    loadUsersWithFilters(1);
+}
+
+async function loadUsersWithFilters(page = 1) {
+    showLoading();
+    usersCurrentPage = page;
+
+    try {
+        const token = getAuthToken();
+        let url = `${API_BASE}/admin/users?page=${page}&page_size=20`;
+
+        if (currentFilters.users.keyword) {
+            url += `&keyword=${encodeURIComponent(currentFilters.users.keyword)}`;
+        }
+        if (currentFilters.users.vip_level) {
+            url += `&vip_level=${currentFilters.users.vip_level}`;
+        }
+
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            renderUsersTable(data.data.list);
+            document.getElementById('userCount').textContent = `共 ${data.data.total} 个用户`;
+            renderPagination('usersPagination', data.data.total, page, loadUsersWithFilters);
+        }
+    } catch (err) {
+        showToast('加载用户失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function filterTasksByStatus(status) {
+    currentFilters.tasks.status = status;
+    loadTasksWithFilters(1);
+}
+
+function filterTasksByPlatform(platform) {
+    currentFilters.tasks.platform_type = platform;
+    loadTasksWithFilters(1);
+}
+
+async function loadTasksWithFilters(page = 1) {
+    showLoading();
+    tasksCurrentPage = page;
+
+    try {
+        const token = getAuthToken();
+        let url = `${API_BASE}/admin/tasks?page=${page}&page_size=20`;
+
+        if (currentFilters.tasks.status) {
+            url += `&status=${currentFilters.tasks.status}`;
+        }
+        if (currentFilters.tasks.platform_type) {
+            url += `&platform_type=${currentFilters.tasks.platform_type}`;
+        }
+
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            renderTasksTable(data.data.list);
+            document.getElementById('taskCount').textContent = `共 ${data.data.total} 个任务`;
+            renderPagination('tasksPagination', data.data.total, page, loadTasksWithFilters);
+        }
+    } catch (err) {
+        showToast('加载任务失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function filterOrdersByStatus(status) {
+    currentFilters.orders.status = status;
+    loadOrdersWithFilters(1);
+}
+
+function filterOrdersByProduct(product) {
+    currentFilters.orders.product_type = product;
+    loadOrdersWithFilters(1);
+}
+
+async function loadOrdersWithFilters(page = 1) {
+    showLoading();
+    ordersCurrentPage = page;
+
+    try {
+        const token = getAuthToken();
+        let url = `${API_BASE}/admin/orders?page=${page}&page_size=20`;
+
+        if (currentFilters.orders.status) {
+            url += `&status=${currentFilters.orders.status}`;
+        }
+        if (currentFilters.orders.product_type) {
+            url += `&product_type=${currentFilters.orders.product_type}`;
+        }
+
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            renderOrdersTable(data.data.list);
+            document.getElementById('orderCount').textContent = `共 ${data.data.total} 个订单`;
+            renderPagination('ordersPagination', data.data.total, page, loadOrdersWithFilters);
+        }
+    } catch (err) {
+        showToast('加载订单失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Load Analytics Data
+async function loadAnalyticsData() {
+    showLoading();
+
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE}/admin/analytics`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            renderDailyTasksChart(data.data.daily_tasks);
+            renderPlatformPieChart(data.data.platform_stats);
+            renderHourlyHeatmap(data.data.hourly_stats);
+        }
+    } catch (err) {
+        showToast('加载分析数据失败', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Render Daily Tasks Chart
+function renderDailyTasksChart(dailyTasks) {
+    const container = document.querySelector('#page-analytics .card:nth-child(1) .chart-container');
+    if (!dailyTasks || dailyTasks.length === 0) {
+        container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">暂无数据</div>';
+        return;
+    }
+
+    const maxCount = Math.max(...dailyTasks.map(d => d.count), 1);
+    let html = '<div style="padding:20px;">';
+    html += '<div style="display:flex;align-items:flex-end;justify-content:space-around;height:220px;border-bottom:2px solid #e0e0e0;position:relative;">';
+
+    dailyTasks.forEach((d, index) => {
+        const heightPercent = (d.count / maxCount) * 100;
+        const barHeight = Math.max(heightPercent * 1.8, 5);
+
+        html += `
+            <div style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                flex:1;
+            ">
+                <div style="
+                    font-size:11px;
+                    color:#666;
+                    margin-bottom:4px;
+                    font-weight:600;
+                ">${d.count}</div>
+                <div style="
+                    width:30px;
+                    background:linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+                    border-radius:4px 4px 0 0;
+                    height:${barHeight}px;
+                    transition:all 0.3s ease;
+                    cursor:pointer;
+                    position:relative;
+                " title="${d.date}: ${d.count}个任务"></div>
+                <div style="
+                    font-size:11px;
+                    color:#999;
+                    margin-top:8px;
+                    transform:rotate(-45deg);
+                    white-space:nowrap;
+                ">${d.date.slice(5)}</div>
+            </div>
+        `;
+    });
+
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
+// Render Platform Pie Chart
+function renderPlatformPieChart(platformStats) {
+    const container = document.querySelector('#page-analytics .card:nth-child(2) .chart-container');
+    if (!platformStats || platformStats.length === 0) {
+        container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">暂无数据</div>';
+        return;
+    }
+
+    const total = platformStats.reduce((sum, p) => sum + p.count, 0);
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'];
+
+    let html = '<div style="padding:20px;display:flex;align-items:center;justify-content:center;gap:30px;flex-wrap:wrap;">';
+    html += '<div style="position:relative;width:160px;height:160px;">';
+
+    let cumulativePercent = 0;
+    platformStats.forEach((p, index) => {
+        const percent = (p.count / total) * 100;
+        const startAngle = cumulativePercent * 3.6;
+        const endAngle = (cumulativePercent + percent) * 3.6;
+
+        const largeArcFlag = percent > 50 ? 1 : 0;
+        const x1 = 80 + 70 * Math.cos((startAngle - 90) * Math.PI / 180);
+        const y1 = 80 + 70 * Math.sin((startAngle - 90) * Math.PI / 180);
+        const x2 = 80 + 70 * Math.cos((endAngle - 90) * Math.PI / 180);
+        const y2 = 80 + 70 * Math.sin((endAngle - 90) * Math.PI / 180);
+
+        if (percent > 0.5) {
+            html += `
+                <path d="M 80 80 L ${x1} ${y1} A 70 70 0 ${largeArcFlag} 1 ${x2} ${y2} Z"
+                      fill="${colors[index % colors.length]}"
+                      style="transition:transform 0.2s ease;"
+                      onmouseover="this.style.transform='scale(1.05)'"
+                      onmouseout="this.style.transform='scale(1)'"
+                      title="${getPlatformName(p.platform)}: ${percent.toFixed(1)}%"/>
+            `;
+        }
+
+        cumulativePercent += percent;
+    });
+
+    html += '</div>';
+
+    html += '<div style="flex:1;min-width:150px;">';
+    html += '<table style="width:100%;">';
+    platformStats.forEach((p, index) => {
+        const percent = ((p.count / total) * 100).toFixed(1);
+        html += `
+            <tr>
+                <td style="padding:6px 0;">
+                    <span style="
+                        display:inline-block;
+                        width:12px;
+                        height:12px;
+                        border-radius:50%;
+                        background:${colors[index % colors.colors]};
+                        margin-right:8px;
+                    "></span>
+                    ${getPlatformName(p.platform)}
+                </td>
+                <td style="padding:6px 0;text-align:right;font-weight:600;color:#333;">
+                    ${percent}%
+                </td>
+                <td style="padding:6px 0;text-align:right;color:#666;font-size:12px;">
+                    (${p.count})
+                </td>
+            </tr>
+        `;
+    });
+    html += '</table></div></div>';
+
+    container.innerHTML = html;
+}
+
+// Render Hourly Heatmap
+function renderHourlyHeatmap(hourlyStats) {
+    const container = document.querySelector('#page-analytics .card:nth-child(3) .chart-container');
+    if (!hourlyStats || hourlyStats.length === 0) {
+        container.innerHTML = '<div style="color:#999;text-align:center;padding:40px;">暂无数据</div>';
+        return;
+    }
+
+    const maxCount = Math.max(...hourlyStats.map(h => h.count), 1);
+
+    let html = '<div style="padding:20px;">';
+    html += '<div style="display:flex;align-items:flex-end;justify-content:space-between;height:250px;border-left:2px solid #e0e0e0;border-bottom:2px solid #e0e0e0;position:relative;">';
+
+    hourlyStats.forEach(h => {
+        const intensity = h.count / maxCount;
+        const height = Math.max(intensity * 100, 2);
+
+        let bgColor;
+        if (intensity === 0) bgColor = '#f5f5f5';
+        else if (intensity < 0.25) bgColor = '#c6e48b';
+        else if (intensity < 0.5) bgColor = '#7bc96f';
+        else if (intensity < 0.75) bgColor = '#239a3b';
+        else bgColor = '#196127';
+
+        html += `
+            <div style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                flex:1;
+            ">
+                <div style="
+                    font-size:10px;
+                    color:#666;
+                    margin-bottom:2px;
+                ">${h.count}</div>
+                <div style="
+                    width:85%;
+                    background:${bgColor};
+                    border-radius:3px;
+                    height:${height}%;
+                    min-height:4px;
+                    transition:all 0.3s ease;
+                    cursor:pointer;
+                " title="${h.hour}:00-${h.hour+1}:00: ${h.count}个任务"></div>
+                <div style="
+                    font-size:10px;
+                    color:#999;
+                    margin-top:6px;
+                ">${h.hour}</div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    html += '<div style="margin-top:12px;display:flex;justify-content:center;gap:15px;font-size:11px;color:#666;">';
+    html += '<span>少 <span style="display:inline-block;width:12px;height:12px;background:#f5f5f5;border-radius:2px;margin-left:4px;"></span></span>';
+    html += '<span><span style="display:inline-block;width:12px;height:12px;background:#c6e48b;border-radius:2px;margin-left:4px;"></span></span>';
+    html += '<span><span style="display:inline-block;width:12px;height:12px;background:#7bc96f;border-radius:2px;margin-left:4px;"></span></span>';
+    html += '<span><span style="display:inline-block;width:12px;height:12px;background:#239a3b;border-radius:2px;margin-left:4px;"></span></span>';
+    html += '<span>多 <span style="display:inline-block;width:12px;height:12px;background:#196127;border-radius:2px;margin-left:4px;"></span></span>';
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>

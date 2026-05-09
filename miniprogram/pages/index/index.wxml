@@ -1,0 +1,61 @@
+<view class="container">
+  
+  <view class="card">
+    <view class="title">🎬 去水印神器</view>
+    <view class="subtitle">支持8大主流平台 · 一键解析下载</view>
+
+    <view class="platform-grid">
+      <view 
+        wx:for="{{platforms}}" 
+        wx:key="key"
+        class="platform-item"
+        bindtap="selectPlatform"
+        data-key="{{item.key}}"
+      >
+        {{item.icon}} {{item.name}}
+      </view>
+    </view>
+
+    <view class="input-wrapper">
+      <textarea 
+        class="input-field" 
+        placeholder="粘贴分享链接，自动检测平台..."
+        value="{{videoUrl}}"
+        bindinput="onUrlInput"
+        auto-height
+        maxlength="-1"
+      ></textarea>
+      
+      <view class="platform-badge" wx:if="{{showPlatformBadge}}">
+        {{platformName}}
+      </view>
+    </view>
+
+    <view style="display: flex; gap: 16rpx; margin-bottom: 24rpx;">
+      <button 
+        size="mini" 
+        style="flex: 1; background: #f0f0f0; color: #666;"
+        bindtap="pasteFromClipboard"
+      >
+        📋 粘贴
+      </button>
+      <button 
+        size="mini" 
+        style="flex: 1; background: #f0f0f0; color: #666;"
+        bindtap="scanQRCode"
+      >
+        📷 扫码
+      </button>
+    </view>
+
+    <button 
+      class="btn-primary" 
+      bindtap="parseVideo"
+      disabled="{{isParsing}}"
+    >
+      <text wx:if="{{isParsing}}" class="loading-spinner"></text>
+      {{isParsing ? '解析中...' : '⚡ 开始解析'}}
+    </button>
+  </view>
+
+</view>

@@ -1,0 +1,50 @@
+<view class="container">
+  
+  <view class="result-card" wx:if="{{task}}">
+    
+    <view style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx;">
+      <view class="title" style="margin-bottom: 0;">{{task.title || '未命名视频'}}</view>
+      <view class="status-tag {{status === 'success' ? 'status-success' : (status === 'failed' ? 'status-failed' : status-processing')}}">
+        {{status === 'success' ? '✅ 成功' : (status === 'failed' ? '❌ 失败' : '⏳ 处理中')}}
+      </view>
+    </view>
+
+    <image 
+      wx:if="{{task.cover_url && status === 'success'}}"
+      src="{{task.cover_url}}" 
+      mode="aspectFit"
+      style="width: 100%; border-radius: 12rpx; margin: 20rpx 0;"
+    ></image>
+
+    <view style="display: flex; gap: 16rpx; margin: 16rpx 0; color: #666; font-size: 26rpx;">
+      <text>🏷️ {{task.platform}}</text>
+      <text>⏱️ {{task.duration ? (task.duration >= 60 ? Math.floor(task.duration/60) + '分' + (task.duration%60) + '秒' : task.duration + '秒') : '--'}}</text>
+      <text>⚡ {{task.process_time}}ms</text>
+    </view>
+
+    <view wx:if="{{status === 'success'}}">
+      <button class="download-btn" bindtap="downloadVideo">
+        💾 保存无水印视频
+      </button>
+      
+      <view style="display: flex; gap: 16rpx; margin-top: 16rpx;">
+        <button size="mini" style="flex: 1;" bindtap="copyLink">
+          📋 复制链接
+        </button>
+        <button open-type="share" size="mini" style="flex: 1;">
+          🔗 分享好友
+        </button>
+      </view>
+    </view>
+
+    <view wx:if="{{status === 'failed'}}" style="color: #dc3545; padding: 20rpx;">
+      错误信息：{{task.error_message || '未知错误'}}
+    </view>
+
+  </view>
+
+  <view class="empty-state" wx:if="{{!task && polling}}">
+    <text>⏳ 正在解析中...</text>
+  </view>
+
+</view>
